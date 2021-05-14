@@ -4,100 +4,7 @@ df_r <- df_r[,2:22]
 library(tidyverse)
 options(scipen = 999)
 
-# # Subtract three datasets by key time points: January 2020, March 2020, and March 2021 ------
-# tweets1 <- read.csv("tweets1_r.csv")
-# tweets2 <- read.csv("tweets2_r.csv")
-# tweets3 <- read.csv("tweets3_r.csv")
-# 
-# # Jan 2020, 20200118 to 20200214
-# tweets1$created_at <- as.Date(tweets1$created_at) 
-# tweets1 <- tweets1 %>% filter(created_at >= as.Date("2020-01-18") & created_at <= as.Date("2020-02-14")) %>% 
-#   distinct() %>% complete(expanded_url)
-# 
-# # March 2020, 20200311 to 20200407
-# tweets2$created_at <- as.Date(tweets2$created_at) 
-# tweets2 <- tweets2 %>% filter(created_at >= as.Date("2020-03-11") & created_at <= as.Date("2020-04-07"))
-# tweets2 <- unique(tweets2)
-# 
-# # March 2021, 20210310 to 20210406
-# tweets3$created_at <- as.Date(tweets3$created_at) 
-# tweets3 <- tweets3 %>% filter(created_at >= as.Date("2021-03-10") & created_at <= as.Date("2021-04-06")) %>% 
-#   distinct() %>% complete(expanded_url)
-# 
-# names(tweets3)[names(tweets3) == 'username_twitterurl'] <- 'username_twitterlink'
-# 
-# common_cols <- Reduce(intersect, list(colnames(tweets1), colnames(tweets2), colnames(tweets3)))
-# 
-# library(dplyr)
-# dat <- bind_rows(list(tweets1=tweets1[common_cols], 
-#                       tweets2=tweets2[common_cols],
-#                       tweets3=tweets3[common_cols]), .id = 'source') %>% select(-c(X))
-# dat <- dat[!is.na(dat$expanded_url),]
-# 
-# # expand url
-# urls <- distinct(dat, expanded_url) %>% filter(str_count(expanded_url, "/") < 4)
-# 
-# for (i in 7756:length(urls$expanded_url)){
-# urls$url_d[i] <- expand_urls(urls$expanded_url[i]) %>% select(expanded_url)
-# }
-# 
-# urls$url_d <- unlist(urls$url_d )
-# dat$url_d <- ifelse(match(dat$expanded_url, urls$expanded_url), urls$url_d, dat$expanded_url)
-# dat$url_d <- ifelse(is.na(dat$url_d), dat$expanded_url, dat$url_d)
-# 
-# domain <- function(x) strsplit(gsub("http://|https://|www\\.", "", x), "/")[[c(1, 1)]]
-# dat$link_host <- sapply(dat$url_d, domain)
-# 
-# # code dataset concerning rating, and fakenews
-# # political ratings
-# allsides_data <- readr::read_csv("https://raw.githubusercontent.com/favstats/AllSideR/master/data/allsides_data.csv")
-# allsides_data_twitter <- allsides_data%>% drop_na(screen_name)
-# dat$rating <- allsides_data_twitter$rating[match(dat$username_twitterlink, allsides_data_twitter$screen_name)]
-# 
-# media_clowd <- read.csv('media.csv') #partisanship from media cloud
-# dat$rating <- ifelse(dat$link_host != 'twitter.com', 
-#                     media_clowd$partisanship[match(dat$link_host, tolower(media_clowd$host))],
-#                     dat$rating)
-# dat$rating <- recode(dat$rating, "left-center" = "center left", "right-center" = "center right")
-# dat_r$rating[dat_r$name == 'realDonaldTrump'] <- 'right'
-#   
-# table(dat$rating)
-# 
-# # fakenews
-# black_sites <- as.data.frame(readLines("black_sites.txt"))
-# colnames(black_sites) <- 'host'
-# politifact_news <- read.csv('politifact_new.csv')
-# newsfact_coding <- read.csv('Domain_Codings.csv')
-# newsfact_coding <- newsfact_coding[-(171:999),]
-# newsfact_coding <- newsfact_coding %>% select(1, 2)
-# politifact_news$X <- tolower(politifact_news$X)
-# dat_r <- left_join(dat_r, newsfact_coding, by = c("link_host" = "Domain"))
-# 
-# dat_r$fakenews <- ifelse(dat_r$link_host %in% tolower(black_sites$host), "fake news", NA)
-# dat_r$fakenews <- ifelse(dat_r$link_host %in% politifact_news$X,  
-#                          politifact_news$Type.of.site[match(dat_r$link_host, politifact_news$X)],
-#                          dat_r$fakenews)
-# dat_r$fakenews <- ifelse(dat_r$link_host %in% newsfact_coding$Domain,  
-#                          newsfact_coding$Likelihood..rating[match(dat_r$link_host, newsfact_coding$Domain)],
-#                          dat_r$fakenews)
-# table(dat_r$fakenews)
-# table(dat_r$fakeness)
-# dat_r$fakenews <- recode(dat_r$fakenews, "fake news" = "Red",
-#                          "Fake news" = "Red",
-#                          Green = "news website",
-#                          "N/A" = "not a news", 
-#                          Satire = "Yellow", "Parody site" = "Yellow",
-#                          "some fake stories" = "Orange", "Some fake stories" = "Orange")
-# 
-# dat_r <-  dat_r[, 1:18]
-# write.csv(dat_r, "dat_r.csv")
-# 
-# # 1. Describe the dataset ----
-# dat_r %>% group_by(source) %>% distinct(author_id) %>% count()
-# dat_r %>% group_by(source) %>% distinct(text) %>%count()
-
-
-# 2. Top ten shared sources. -----
+# 1. Top ten shared sources. -----
 # What are the top media organizations (domain) mostly shared by unique Twitter users that used racial charge phrases in the overall period of 15 months? In the three time periods?
 df_r$name <- ifelse(df_r$link_host == 'twitter.com', df_r$username_twitterlink, df_r$link_host)
 df_r$name <- ifelse(is.na(df_r$name), df_r$expanded_url, df_r$name)
@@ -122,7 +29,7 @@ top_twitter$rating <- df_r$rating[match(top_twitter$username_twitterlink, df_r$u
 library(stargazer)
 stargazer(top_names, header=FALSE, type='text', summary=FALSE, title="Data Frame",digits=1)
 
-# 3. How does their political ratings and fakeness distribute? ----
+# 2. How does their political ratings and fakeness distribute? ----
 # the portion of links that are of different political ratings or contain false information in all links shared in the tweets.
 ratings <- df_r %>% group_by(period) %>% count(rating) %>% mutate(percent = n/sum(n))
 fakeness <- df_r %>% group_by(period) %>% count(fakenews) %>% mutate(percent = n/sum(n))
@@ -172,41 +79,7 @@ ggplot(fakeness_v, aes(x = fakeness_v$period, y = percent, fill=factor(fakeness)
        fill = "Falsehood level",
        color = "Falsehood level")
 
-# 4. Network analysis-----
-#* nodes ----------
-nodes1 <- dat_r %>% filter(period == 'tweets1') %>% 
-  group_by(name) %>%         
-  summarise(size = n_distinct(author_id)) 
-nodes1$partisan <- dat_r$rating[match(nodes1$name,dat_r$name)]
-nodes1$fakenews <- dat_r$Likelihood..rating.y[match(nodes1$name,dat_r$link_host)]
-nodes1$id <- factor(nodes1$name)
-nodes1 <- nodes1[c(5,1,2,3,4)]
-#* edges ----------
-# Links by co-tweeting patterns (how many times stories from two sites were tweeted 
-# by the same person on the same day).
-edges1 <- dat_r %>% filter(period == 'tweets1') %>% 
-  group_by(author_id, created_at) %>% filter(n()>=2) %>% group_by(author_id, created_at) %>%
-  do(data.frame(t(combn(.$name, 2)), stringsAsFactors=FALSE)) %>% filter(X1!= X2)
-colnames(edges1) <- c("author_id",'created_at', 'from', 'to')
-edges1 <- edges1[c(3,4, 1,2)]
-
-# visualization
-library("igraph")
-net1 <- graph_from_data_frame(d=edges1, vertices=nodes1, directed=FALSE) 
-Isolated = which(degree(net1)==0)
-net1_r = delete.vertices(net1, Isolated)
-
-E(net1_r)$arrow.mode <- 0
-E(net1_r)$curved <- 0
-E(net1_r)$width <- 0
-V(net1_r)$size <- sqrt(V(net1_r)$size)
-V(net1_r)$label <- V(net1_r)$name
-
-ceb1 <- cluster_edge_betweenness(net1_r) 
-plot(net1_r)
-plot(ceb1, net1, vertex.label.cex = V(net1)$size/100)
-
-# 5. Text analysis -----
+# 3. Text analysis -----
 library("tidytext") 
 library("textclean")
 library("textstem")
@@ -337,3 +210,38 @@ ggplot(sen_long_bias, aes(x = sentiment, y = percent, fill = sentiment)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 # no significant difference
+
+
+# 4. Network analysis-----
+#* nodes ----------
+nodes1 <- dat_r %>% filter(period == 'tweets1') %>% 
+  group_by(name) %>%         
+  summarise(size = n_distinct(author_id)) 
+nodes1$partisan <- dat_r$rating[match(nodes1$name,dat_r$name)]
+nodes1$fakenews <- dat_r$Likelihood..rating.y[match(nodes1$name,dat_r$link_host)]
+nodes1$id <- factor(nodes1$name)
+nodes1 <- nodes1[c(5,1,2,3,4)]
+#* edges ----------
+# Links by co-tweeting patterns (how many times stories from two sites were tweeted 
+# by the same person on the same day).
+edges1 <- dat_r %>% filter(period == 'tweets1') %>% 
+  group_by(author_id, created_at) %>% filter(n()>=2) %>% group_by(author_id, created_at) %>%
+  do(data.frame(t(combn(.$name, 2)), stringsAsFactors=FALSE)) %>% filter(X1!= X2)
+colnames(edges1) <- c("author_id",'created_at', 'from', 'to')
+edges1 <- edges1[c(3,4, 1,2)]
+
+# visualization
+library("igraph")
+net1 <- graph_from_data_frame(d=edges1, vertices=nodes1, directed=FALSE) 
+Isolated = which(degree(net1)==0)
+net1_r = delete.vertices(net1, Isolated)
+
+E(net1_r)$arrow.mode <- 0
+E(net1_r)$curved <- 0
+E(net1_r)$width <- 0
+V(net1_r)$size <- sqrt(V(net1_r)$size)
+V(net1_r)$label <- V(net1_r)$name
+
+ceb1 <- cluster_edge_betweenness(net1_r) 
+plot(net1_r)
+plot(ceb1, net1, vertex.label.cex = V(net1)$size/100)
