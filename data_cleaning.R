@@ -3,7 +3,7 @@ library(dplyr)
 library(jsonlite)
 library(sparklyr.nested)
 
-# 1. read data with sparklyr ------
+# 1. Read data with sparklyr ------
 Sys.setenv(SPARK_HOME="/usr/lib/spark")
 # Configure cluster (c3.4xlarge 30G 16core 320disk)
 conf <- spark_config()
